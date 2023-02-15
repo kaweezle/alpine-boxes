@@ -1,19 +1,20 @@
 # cSpell: disable
-name: Build base image and RootFS
+name: Build a box
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - "main"
-    tags:
-      - "v*"
-  pull_request:
-    branches:
-      - "main"
+  workflow_call:
+    inputs:
+      context:
+        required: true
+        type: string
+    # secrets:
+    #   token:
+    #     required: true
 
 jobs:
   build-base:
     runs-on: ubuntu-latest
+    outputs:
+      sha256sum: ${{ steps.compress.outputs.sha256sum }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Docker Buildx
@@ -31,12 +32,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ghcr.io/${{ github.repository }}-base
+          images: ghcr.io/${{ github.repository }}-${{ inputs.context }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: ./base
+          context: ${{ inputs.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -46,53 +47,38 @@ jobs:
       - name: Export as root fs
         uses: docker/build-push-action@v3
         with:
-          context: ./base
+          context: ${{ inputs.context }}
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=tar,dest=alpine-boxes-base.rootfs.tar
+          outputs: type=tar,dest=alpine-boxes-${{ inputs.context }}.rootfs.tar
+
+      - name: Get distributions
+        uses: actions/download-artifact@v3
+        with:
+          name: shasums
 
       - name: Compress root filesystem and compute checksum
+        id: compress
+        env:
+          BOX_NAME: ${{ inputs.context }}
         run: |
-          gzip alpine-boxes-base.rootfs.tar
-          sha256sum alpine-boxes-base.rootfs.tar.gz >> SHA256SUMS
+          gzip alpine-boxes-${BOX_NAME}.rootfs.tar
+          sha256sum alpine-boxes-${BOX_NAME}.rootfs.tar.gz >> SHA256SUMS
+          echo "sha256sum=$(tail -1 SHA256SUMS)" >>$GITHUB_OUTPUT
 
       - name: Upload root fs artifact
         uses: actions/upload-artifact@v3
         with:
           name: rootfs
           path: |
-            alpine-boxes-base.rootfs.tar.gz
+            alpine-boxes-${{ inputs.context }}.rootfs.tar.gz
 
-      - name: Upload shasums artifact
+      - name: shasums artifact
         uses: actions/upload-artifact@v3
         with:
           name: shasums
           path: |
             SHA256SUMS
-
-  build-docker:
-    needs: [build-base]
-    uses: ./.github/workflows/build-box.yml
-    with:
-      context: docker
-    secrets: inherit
-
-  release-rootfses:
-    needs: [build-base, build-docker]
-    runs-on: ubuntu-latest
-    if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease
-    steps:
-      - name: Get Root File Systems
-        uses: actions/download-artifact@v3
-
-      - name: release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            alpine-boxes-*.rootfs.tar.gz
-            SHA256SUMS
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
