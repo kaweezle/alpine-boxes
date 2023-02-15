@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            alpine-boxes-*.rootfs.tar.gz
-            SHA256SUMS
+            rootfs/alpine-boxes-*.rootfs.tar.gz
+            shasums/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
