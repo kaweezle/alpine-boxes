@@ -87,8 +87,15 @@ jobs:
       context: podman
     secrets: inherit
 
+  build-k3s:
+    needs: [build-base]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: k3s
+    secrets: inherit
+
   release-rootfses:
-    needs: [build-base, build-docker]
+    needs: [build-base, build-docker, build-podman, build-k3s]
     runs-on: ubuntu-latest
     if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease
     steps:
