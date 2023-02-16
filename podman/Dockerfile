@@ -9,7 +9,7 @@ RUN apk add --no-cache podman && \
      echo alpine:100000:65536 >>/etc/subgid
 
 COPY ./oci2wsl.sh /usr/local/bin/oci2wsl
+COPY ./dockeralias.ps1 /dockeralias.ps1
+COPY ./wsl.conf /etc/wsl.conf
 
 USER alpine
-
-COPY ./dockeralias.ps1 /home/alpine/dockeralias.ps1

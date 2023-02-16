@@ -21,7 +21,7 @@ if [ ! -d "$directory" ]; then
     usage
 fi
 
-ID=$(podman create -q $image)
+ID=$(podman create -q $image 2>/dev/null)
 if [ -z "$ID" ]; then
     echo "Error! creation of container from $image impossible."
     exit 1
