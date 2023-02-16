@@ -80,6 +80,13 @@ jobs:
       context: docker
     secrets: inherit
 
+  build-podman:
+    needs: [build-base]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: podman
+    secrets: inherit
+
   release-rootfses:
     needs: [build-base, build-docker]
     runs-on: ubuntu-latest
