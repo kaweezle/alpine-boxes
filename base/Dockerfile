@@ -23,7 +23,8 @@ RUN git clone --quiet --depth 1 https://github.com/ohmyzsh/ohmyzsh.git /usr/shar
 # OpenRC stuff
 RUN mkdir -p /lib/rc/init.d && \
     ln -s /lib/rc/init.d /run/openrc && \
-    touch /lib/rc/init.d/softlevel
+    touch /lib/rc/init.d/softlevel && \
+    cp /etc/rc.conf /etc/rc.conf.orig
 
 ADD rc.conf /etc/rc.conf
 
