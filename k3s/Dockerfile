@@ -1,6 +1,7 @@
+# syntax=docker/dockerfile:1.3-labs
 ARG BASE_VERSION=latest
-
-FROM ghcr.io/kaweezle/alpine-boxes-base:${BASE_VERSION}
+ARG BASE_IMAGE=ghcr.io/kaweezle/alpine-boxes-base
+FROM ${BASE_IMAGE}:${BASE_VERSION}
 
 USER root
 

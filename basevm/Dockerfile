@@ -1,47 +1,9 @@
 # syntax=docker/dockerfile:1.3-labs
-ARG BASE_IMAGE=alpine:3.17
-FROM $BASE_IMAGE
+ARG BASE_VERSION=latest
+ARG BASE_IMAGE=ghcr.io/kaweezle/alpine-boxes-minimal
+FROM ${BASE_IMAGE}:${BASE_VERSION}
 
-# TODO: move this into a base image -- start --
-
-# Add the dependencies
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories && \
-    apk update --quiet && \
-    apk add --no-progress --no-cache openrc zsh git curl doas && \
-    rm -rf `find /var/cache/apk/ -type f`
-
-# Change root shell
-RUN sed -ie '/^root:/ s#:/bin/.*$#:/bin/zsh#' /etc/passwd
-
-# Add Oh-my-zsh
-RUN git clone --quiet --depth 1 https://github.com/ohmyzsh/ohmyzsh.git /usr/share/oh-my-zsh && \
-    sed -i -e 's#^export ZSH=.*#export ZSH=/usr/share/oh-my-zsh#g' /usr/share/oh-my-zsh/templates/zshrc.zsh-template && \
-    git clone --quiet --depth=1  https://github.com/zsh-users/zsh-autosuggestions "/usr/share/oh-my-zsh/custom/plugins/zsh-autosuggestions" && \
-    mkdir -p /etc/skel && \
-    install -m 700 -o root -g root /usr/share/oh-my-zsh/templates/zshrc.zsh-template /etc/skel/.zshrc && \
-    install --directory -o root -g root -m 0700 /etc/skel/.ssh && \
-    sed -ie '/^plugins=/ s#.*#plugins=(git zsh-autosuggestions)#' /etc/skel/.zshrc && \
-    sed -ie '/^ZSH_THEME=/ s#.*#ZSH_THEME="amuse"#' /etc/skel/.zshrc
-
-# Configure root user
-USER root
-RUN install -m 700 -o root -g root /etc/skel/.zshrc /root/.zshrc && \
-    install --directory -o root -g root -m 0700 /root/.ssh
-
-# Add user alpine
-RUN adduser -s /bin/zsh -g alpine -D alpine && \
-    addgroup alpine wheel && \
-    echo "permit nopass keepenv :wheel" >> /etc/doas.d/doas.conf
-
-# Configure user alpine
-USER alpine
-
-# Run shell by default. Allows using the docker image
-CMD /bin/zsh
-
-# TODO: move this into a base image -- end --
-
-
+ARG USERNAME=alpine
 USER root
 
 RUN apk add --no-progress --no-cache \
@@ -115,6 +77,6 @@ iface eth0 inet dhcp\n\
     && \
     usermod -p '*' root \
     && \
-    usermod -p '*' alpine
+    usermod -p '*' $USERNAME
 
-USER alpine
+USER $USERNAME

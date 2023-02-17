@@ -1,0 +1,89 @@
+# cSpell: disable
+name: Build base image and RootFS
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  prepare-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - run: touch SHA256SUMS
+      - name: shasums artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: shasums
+          path: |
+            SHA256SUMS
+
+  build-base:
+    needs: [prepare-artifacts]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: base
+    secrets: inherit
+
+  build-minimal:
+    needs: [prepare-artifacts]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: minimal
+    secrets: inherit
+
+  build-docker:
+    needs: [build-base]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: docker
+    secrets: inherit
+
+  build-podman:
+    needs: [build-base]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: podman
+    secrets: inherit
+
+  build-k3s:
+    needs: [build-base]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: k3s
+    secrets: inherit
+
+  build-basevm:
+    needs: [build-minimal]
+    uses: ./.github/workflows/build-box.yml
+    with:
+      context: basevm
+    secrets: inherit
+
+  release-rootfses:
+    needs:
+      - build-base
+      - build-minimal
+      - build-docker
+      - build-podman
+      - build-k3s
+      - build-basevm
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'refs/tags/v') && !github.event.release.prerelease
+    steps:
+      - name: Get Root File Systems
+        uses: actions/download-artifact@v3
+
+      - name: release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            rootfs/alpine-boxes-*.rootfs.tar.gz
+            shasums/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

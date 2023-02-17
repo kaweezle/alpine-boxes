@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.3-labs
-ARG BASE_IMAGE=alpine:3.17
-FROM $BASE_IMAGE
+ARG ALPINE_VERSION=3.17
+ARG ALPINE_IMAGE=alpine
+FROM ${ALPINE_IMAGE}:${ALPINE_VERSION}
 
 # Add the dependencies
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories && \
@@ -29,7 +30,7 @@ RUN install -m 700 -o root -g root /etc/skel/.zshrc /root/.zshrc && \
 
 # Add user 
 ARG USERNAME=alpine
-RUN adduser -s /bin/zsh -g alpine -D $USERNAME && \
+RUN adduser -s /bin/zsh -g $USERNAME -D $USERNAME && \
     addgroup $USERNAME wheel && \
     echo "permit nopass keepenv :wheel" >> /etc/doas.d/doas.conf
 

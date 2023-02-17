@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1.3-labs
-FROM alpine:3.17
+ARG ALPINE_VERSION=3.17
+ARG ALPINE_IMAGE=alpine
+FROM ${ALPINE_IMAGE}:${ALPINE_VERSION}
 
 
 # Add the dependencies
