@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1.3-labs
-FROM alpine:3.17
+ARG ALPINE_VERSION=3.17
+ARG ALPINE_IMAGE=alpine
+FROM ${ALPINE_IMAGE}:${ALPINE_VERSION}
 
 
 # Add the dependencies
@@ -23,7 +25,8 @@ RUN git clone --quiet --depth 1 https://github.com/ohmyzsh/ohmyzsh.git /usr/shar
 # OpenRC stuff
 RUN mkdir -p /lib/rc/init.d && \
     ln -s /lib/rc/init.d /run/openrc && \
-    touch /lib/rc/init.d/softlevel
+    touch /lib/rc/init.d/softlevel && \
+    cp /etc/rc.conf /etc/rc.conf.orig
 
 ADD rc.conf /etc/rc.conf
 
